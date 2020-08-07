@@ -1,0 +1,7 @@
+
+the test* programmes were used to build the workflow but applied to a single file
+
+the order is
+
+test_preprocessing.m
+test_remove_components.m
