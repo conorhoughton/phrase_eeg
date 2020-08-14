@@ -15,7 +15,8 @@ stimuli = {
 	'phmi', {'S150' 'S151' 'S152' 'S153' 'S154' 'S155' 'S156' 'S157' 'S158' 'S159' 'S160' 'S161' 'S162' 'S163' 'S164' 'S165' 'S166' 'S167' 'S168' 'S169' 'S170' 'S171' 'S172' 'S173' 'S174'}
           };
       
-lpf = 25;
+lpf = 400;
+
 sample_freq = 1000;
 
 ms=0.001;
@@ -28,7 +29,8 @@ trial_length = word_length*number_of_words_per_sentence*number_of_sentences_per_
 
 filepath = '/home/cscjh/Experiment2/data/'
 filepath_save = '/home/cscjh/Experiment2/processed_data/pre_processed/'
-filename = 'P5_25_11_2018'
+%filename = 'P5_25_11_2018'
+filename = 'P15_13_12_2018'
 fileend  = '.eeg'
 
 full_filename=strcat(filepath,filename,fileend)
@@ -42,6 +44,8 @@ block = horzcat(stimuli{1,2},stimuli{2,2},stimuli{3,2},stimuli{4,2},stimuli{5,2}
 
 cfg = [];
 cfg.dataset = full_filename;
+cfg.lpfilter = 'yes'
+cfg.lpfreq   = lpf
 cfg.trialdef.eventtype  = 'Stimulus';
 cfg.trialdef.eventvalue = block;
 cfg.trialdef.prestim    = -sentence_length*1;   % this cuts one sentence length
@@ -53,10 +57,11 @@ cfg = ft_definetrial(cfg);
 
 cfg.channel = 'EEG';
 cfg.demean = 'yes';
+cfg.detrend = 'yes';
 cfg.reref='yes';
 cfg.refchannel = 'Cz'; % need to reference to single electrode for ICA
-cfg.lpfilter = 'yes'; 
-cfg.lpfreq = lpf;
+                       %cfg.lpfilter = 'yes'; 
+                       %cfg.lpfreq = lpf;
 
 data = ft_preprocessing(cfg);
     
@@ -66,10 +71,11 @@ save(f, 'data');
 
 % --------- calculate power
 
-variances=zeros(32,1)
+variances=zeros(32,1);
 for i=1:150
     variances=variances+var(data.trial{1,i},0,2)./150;
 end
+variances
 
 % --------- do ica
 
@@ -94,8 +100,8 @@ for i=1:cfg.numcomponent
 
     power= electrode_weighting.* variances;
     
-    frontal_pwr = mean(power([1:3,7]));
-    back_pwr = mean(power([4:6, 8:32]));
+    frontal_pwr = mean(power([1:3,7]));         % Fp1 / Fp2 / F7 / F8
+    back_pwr = mean(power([4:6, 8:13, 15:32])); %14 is the reference channel Cz
     extra='_front_4';
             
     i
