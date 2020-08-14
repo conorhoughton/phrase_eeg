@@ -1,4 +1,5 @@
-% % % Load the data, split the trial up in terms of events and preprocess
+% % % Load the data, split the trial up in terms of events and preprocess and do blink removal
+
 
 addpath /home/cscjh/fieldtrip/fieldtrip-20200607
 
@@ -15,7 +16,8 @@ stimuli = {
 	'phmi', {'S150' 'S151' 'S152' 'S153' 'S154' 'S155' 'S156' 'S157' 'S158' 'S159' 'S160' 'S161' 'S162' 'S163' 'S164' 'S165' 'S166' 'S167' 'S168' 'S169' 'S170' 'S171' 'S172' 'S173' 'S174'}
           };
       
-lpf = 400;
+%low pass filter
+lpf = 25;
 
 sample_freq = 1000;
 
@@ -31,14 +33,18 @@ filepath = '/home/cscjh/Experiment2/data/'
 filepath_save = '/home/cscjh/Experiment2/processed_data/pre_processed/'
 %filename = 'P5_25_11_2018'
 filename = 'P15_13_12_2018'
-fileend  = '.eeg'
+fileend  = '.eeg';
+extra_ica='_ica_comp';
+extra_comp_rm='_rm_front_4';         
+
 
 full_filename=strcat(filepath,filename,fileend)
 
 hdr   = ft_read_header(full_filename);
 event = ft_read_event(full_filename);
 	
-block = horzcat(stimuli{1,2},stimuli{2,2},stimuli{3,2},stimuli{4,2},stimuli{5,2}, stimuli{6,2})  
+block = horzcat(stimuli{1,2},stimuli{2,2},stimuli{3,2},stimuli{4,2},stimuli{5,2}, stimuli{6,2});  
+n_block=150;
 
 % --------- define trials
 
@@ -60,8 +66,6 @@ cfg.demean = 'yes';
 cfg.detrend = 'yes';
 cfg.reref='yes';
 cfg.refchannel = 'Cz'; % need to reference to single electrode for ICA
-                       %cfg.lpfilter = 'yes'; 
-                       %cfg.lpfreq = lpf;
 
 data = ft_preprocessing(cfg);
     
@@ -69,7 +73,7 @@ fileout = strcat(filepath_save,filename);
 f = fileout;
 save(f, 'data');       
 
-% --------- calculate power
+% --------- calculate power - variance is used as a proxy for power
 
 variances=zeros(32,1);
 for i=1:150
@@ -85,10 +89,9 @@ cfg.numcomponent = 30;
 
 comp = ft_componentanalysis(cfg, data);
 
-fileout = strcat(filepath_save,filename,"_ica_comp");
+fileout = strcat(filepath_save,filename,extra_ica);
 f = fileout;
 save(f, 'comp');
-
 
 component_to_remove = [];
 
@@ -102,53 +105,53 @@ for i=1:cfg.numcomponent
     
     frontal_pwr = mean(power([1:3,7]));         % Fp1 / Fp2 / F7 / F8
     back_pwr = mean(power([4:6, 8:13, 15:32])); %14 is the reference channel Cz
-    extra='_front_4';
-            
-    i
-    ratio = frontal_pwr / back_pwr   
+
+    %    i
+    ratio = frontal_pwr / back_pwr;   
 
     if ratio>=4
-        r = 'to remove'
+        %r = 'to remove'
         component_to_remove = [component_to_remove; i];                     
     end
         
 end
         
-unique(component_to_remove)
+% --------- plot - use for visual check and then comment out
 
-                
 % plot the components topographically for visual inspection
 
-figure
-cfg = [];
-cfg.component = 1:30;       % specify the component(s) that should be plotted
-cfg.layout    = 'easycapM23.mat' % 'biosemi128.lay'% %; % specify the layout file
-cfg.comment   = 'no';
-ft_topoplotIC(cfg, comp)
+% figure
+% cfg = [];
+% cfg.component = 1:30;       % specify the component(s) that should be plotted
+% cfg.layout    = 'easycapM23.mat' % 'biosemi128.lay'% %; % specify the layout file
+% cfg.comment   = 'no';
+% ft_topoplotIC(cfg, comp)
+
+% cfg = [];
+% cfg.layout = 'easycapM23.mat' %layout_file
+% cfg.viewmode = 'component';
+% ft_databrowser(cfg, comp)
+
+
+% --------- remove the blink components, rereference to average and save
 
 cfg = [];
-cfg.layout = 'easycapM23.mat' %layout_file
-cfg.viewmode = 'component';
-ft_databrowser(cfg, comp)
+cfg.component = component_to_remove; 
+data = ft_rejectcomponent(cfg, comp, data);
 
-        
-        % cfg = [];
-        % cfg.component = component_to_remove; 
-        % data = ft_rejectcomponent(cfg, comp, data);
-
-        % % rereference to average
-        % cfg=[]
-        % cfg.reref = 'yes';
-        % cfg.refchannel = 'all';
-        % cfg.refmethod='avg';
-        % data = ft_preprocessing(cfg, data);
-
+% rereference to average
+cfg=[]
+cfg.reref = 'yes';
+cfg.refchannel = 'all';
+cfg.refmethod='avg';
+data = ft_preprocessing(cfg, data);
+data.removed=component_to_remove;
             
-        % filetype = '.mat';
-        % fileout = strcat(filepath_save,filename,'_comp_rm_',extra,blk_nm{1});
-        
-        % f = fileout;
-        % save(f, 'data');
+filetype = '.mat';
+fileout = strcat(filepath_save,filename,extra_comp_rm);
+
+f = fileout;
+save(f, 'data');
 
 
 
