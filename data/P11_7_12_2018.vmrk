@@ -9,6 +9,7 @@ DataFile=P11_7_12_2018.eeg
 ; <Size in data points>, <Channel number (0 = marker is related to all channels)>
 ; Fields are delimited by commas, some fields might be omitted (empty).
 ; Commas in type or description text are coded as "\1".
+; markers corrected
 Mk1=New Segment,,1,1,0,20181207121949141218
 Mk2=Stimulus,S201,95183,1,0
 Mk3=Stimulus,S201,119686,1,0
