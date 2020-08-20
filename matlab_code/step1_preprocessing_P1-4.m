@@ -1,7 +1,5 @@
 % % % Load the data, split the trial up in terms of events and preprocess and do blink removal
-
-% % % This leaves out trial 8 / 98 since this trial cannot be identified for participants 
-% % % To make the ITPC comparable across condition this means trials 38, 68, 128 and 158 are also left out.
+% % % this version is for dealing with the problems with P2-4; basically it loads avav / anan / phmi
 
 addpath /home/cscjh/fieldtrip/fieldtrip-20200607
 
@@ -11,13 +9,15 @@ clearvars
 
 % ---------- stimuli markers
 % written out for convenience, however, the data structure puts all the conditions together
+% no *8 stimuli, the marker file has a f/p with these stimuli
+
 stimuli = {
-	'advp', {'S  0' 'S  1' 'S  2' 'S  3' 'S  4' 'S  5' 'S  6' 'S  7' 'S  9'  'S 10' 'S 11' 'S 12' 'S 13' 'S 14' 'S 15' 'S 16' 'S 17' 'S 18' 'S 19' 'S 20' 'S 21' 'S 22' 'S 23' 'S 24'}
-	'rrrr', {'S 30' 'S 31' 'S 32' 'S 33' 'S 34' 'S 35' 'S 36' 'S 37' 'S 39'  'S 40' 'S 41' 'S 42' 'S 43' 'S 44' 'S 45' 'S 46' 'S 47' 'S 48' 'S 49' 'S 50' 'S 51' 'S 52' 'S 53' 'S 54'}
-	'rrrv', {'S 60' 'S 61' 'S 62' 'S 63' 'S 64' 'S 65' 'S 66' 'S 67' 'S 69'  'S 70' 'S 71' 'S 72' 'S 73' 'S 74' 'S 75' 'S 76' 'S 77' 'S 78' 'S 79' 'S 80' 'S 81' 'S 82' 'S 83' 'S 84'}
-	'avav', {'S 90' 'S 91' 'S 92' 'S 93' 'S 94' 'S 95' 'S 96' 'S 97' 'S 99'  'S100' 'S101' 'S102' 'S103' 'S104' 'S105' 'S106' 'S107' 'S108' 'S109' 'S110' 'S111' 'S112' 'S113' 'S114'}
-	'anan', {'S120' 'S121' 'S122' 'S123' 'S124' 'S125' 'S126' 'S127' 'S129'  'S130' 'S131' 'S132' 'S133' 'S134' 'S135' 'S136' 'S137' 'S138' 'S139' 'S140' 'S141' 'S142' 'S143' 'S144'}
-	'phmi', {'S150' 'S151' 'S152' 'S153' 'S154' 'S155' 'S156' 'S157' 'S159'  'S160' 'S161' 'S162' 'S163' 'S164' 'S165' 'S166' 'S167' 'S168' 'S169' 'S170' 'S171' 'S172' 'S173' 'S174'}
+	'advp', {'S  0' 'S  1' 'S  2' 'S  3' 'S  4' 'S  5' 'S  6' 'S  7' 'S  9' 'S 10' 'S 11' 'S 12' 'S 13' 'S 14' 'S 15' 'S 16' 'S 17' 'S 18' 'S 19' 'S 20' 'S 21' 'S 22' 'S 23' 'S 24'}
+	'rrrr', {'S 30' 'S 31' 'S 32' 'S 33' 'S 34' 'S 35' 'S 36' 'S 37' 'S 39' 'S 40' 'S 41' 'S 42' 'S 43' 'S 44' 'S 45' 'S 46' 'S 47' 'S 48' 'S 49' 'S 50' 'S 51' 'S 52' 'S 53' 'S 54'}
+	'rrrv', {'S 60' 'S 61' 'S 62' 'S 63' 'S 64' 'S 65' 'S 66' 'S 67' 'S 69' 'S 70' 'S 71' 'S 72' 'S 73' 'S 74' 'S 75' 'S 76' 'S 77' 'S 78' 'S 79' 'S 80' 'S 81' 'S 82' 'S 83' 'S 84'}
+	'avav', {'S 90' 'S 91' 'S 92' 'S 93' 'S 94' 'S 95' 'S 96' 'S 97' 'S 99' 'S100' 'S101' 'S102' 'S103' 'S104' 'S105' 'S106' 'S107' 'S108' 'S109' 'S110' 'S111' 'S112' 'S113' 'S114'}
+	'anan', {'S120' 'S121' 'S122' 'S123' 'S124' 'S125' 'S126' 'S127' 'S129' 'S130' 'S131' 'S132' 'S133' 'S134' 'S135' 'S136' 'S137' 'S138' 'S139' 'S140' 'S141' 'S142' 'S143' 'S144'}
+	'phmi', {'S150' 'S151' 'S152' 'S153' 'S154' 'S155' 'S156' 'S157' 'S159' 'S160' 'S161' 'S162' 'S163' 'S164' 'S165' 'S166' 'S167' 'S168' 'S169' 'S170' 'S171' 'S172' 'S173' 'S174'}
           };
       
 % ----------- parameters, filenames
@@ -36,15 +36,17 @@ trial_length = word_length*number_of_words_per_sentence*number_of_sentences_per_
 
 filepath = '/home/cscjh/Experiment2/data/'
 filepath_save = '/home/cscjh/Experiment2/processed_data/pre_processed/'
-filelist ='file_list.txt'
+%filelist ='file_list.txt'
+filelist ='file_list_P1-4.txt'
+
 fileend  = '.eeg';
 extra_ica='_ica_comp';
 extra_comp_rm='_rm_front_4';         
 
-ratioThreshold=10
-
-block = horzcat(stimuli{1,2},stimuli{2,2},stimuli{3,2},stimuli{4,2},stimuli{5,2}, stimuli{6,2});  
-n_block=144; % 6 by 24
+ratio_threshold=10
+	
+block = horzcat(stimuli{4,2},stimuli{5,2}, stimuli{6,2});  
+n_block=72; %24*3
 
 % ----------- load filenames
 
@@ -95,10 +97,9 @@ for file_i=1:length(filenames)
     % --------- calculate power - variance is used as a proxy for power
     
     variances=zeros(32,1);
-    for i=1:n_block
+    for i=n_block
         variances=variances+var(data.trial{1,i},0,2)./n_block;
     end
-    
     
     % --------- do ica
     
@@ -129,7 +130,7 @@ for file_i=1:length(filenames)
         %    i
         ratio = abs(frontal_pwr / back_pwr)   
     
-        if ratio>=ratioThreshold
+        if ratio>=ratio_threshold
             %r = 'to remove'
             component_to_remove = [component_to_remove; i];                     
         end

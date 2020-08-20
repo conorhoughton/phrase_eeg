@@ -8,6 +8,7 @@ clearvars
 
 
 
+    
       
 % ----------- parameters, filenames
 %low pass filter cutoff
@@ -16,24 +17,24 @@ lpf = 25; %Hz
 sample_freq = 1000;
 
 ms=0.001;
-word_length=320*ms;
-number_of_words_per_sentence=4;
-number_of_sentences_per_trial=13;
-
-sentence_length = word_length*number_of_words_per_sentence;
-trial_length = word_length*number_of_words_per_sentence*number_of_sentences_per_trial;
-
 
 filepath = '/home/cscjh/Experiment2/processed_data/pre_processed/'
 filepath_save = '/home/cscjh/Experiment2/processed_data/ft/'
+%filepath_save = '/home/cscjh/Experiment2/processed_data/ft_no_blink_correction/'
 
 filepath_filelist = '/home/cscjh/Experiment2/data/'
-filelist ='file_list.txt'
+%filelist ='file_list.txt'
+filelist ='file_list_P1-4.txt'
 
 extra_load='_rm_front_4';         
-extra_save='_fg';
-extra_dat='_fg';
+extra_save='_ft';
+extra_dat='_ft';
 extra_trial='_trial';
+
+%extra_load='';         
+%extra_save='_ft_no_rm';
+%extra_dat='_ft_no_rm';
+%extra_trial='_trial';
 
 
 
@@ -84,8 +85,7 @@ for file_i=1:length(filenames)
     
     file_out = strcat(filepath_save,filename,extra_trial,'.dat');
     writematrix(freq.trialinfo ,file_out);
-    
-    
+       
     
 end
 
