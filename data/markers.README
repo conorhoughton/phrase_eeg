@@ -1,0 +1,35 @@
+
+advp   0- 24
+rrrv  30- 54
+rrrr  60- 84
+avav  90-114
+anan 120-144
+phmi 150-174
+
+buttons
+201 / 202 / 203
+
+201 - enter
+202 - y
+203 - n
+______________________________
+
+
+P5-20 are fully corrected
+
+P1-4 have problems that mean the marker files haven't been corrected
+for all conditions; they are corrected for avav / anan / phmi
+
+P1-4 have a problem with trial 8 / 38 / 68 / 98 / 128 / 158
+_______________________________
+
+before correction
+
+ADVP 1-11 / 22-29 / 20-25
+rrrV  30- 54
+rrrr  60- 84
+AVAV  90-114
+ANAN 120-144
+phmi 150-174
+
+sed 's/S  1/S201/g' foo | sed 's/S  2/S202/g' | sed 's/S  3/S203/g' > bar

@@ -9,6 +9,9 @@ DataFile=P2_22_11_2018.eeg
 ; <Size in data points>, <Channel number (0 = marker is related to all channels)>
 ; Fields are delimited by commas, some fields might be omitted (empty).
 ; Commas in type or description text are coded as "\1".
+; partially corrected - the AVAV markers have been fixed except
+; for 8 / 98 which is unfixeable
+; the ADVP markers aren't fixed and RRRR / RRRV are f/d
 Mk1=New Segment,,1,1,0,20181122114501351392
 Mk2=DC Correction,,95841,1,0
 Mk3=DC Correction,,120341,1,0
@@ -55,7 +58,7 @@ Mk43=Stimulus,S 32,455131,1,0
 Mk44=Stimulus,S  3,473388,1,0
 Mk45=Stimulus,S123,473690,1,0
 Mk46=Stimulus,S  3,492260,1,0
-Mk47=Stimulus,S  9,492569,1,0
+Mk47=Stimulus,S 93,492569,1,0
 Mk48=Stimulus,S  3,510787,1,0
 Mk49=Stimulus,S 33,511087,1,0
 Mk50=Stimulus,S  3,528770,1,0
@@ -70,7 +73,7 @@ Mk58=Stimulus,S 34,584232,1,0
 Mk59=Stimulus,S  3,601551,1,0
 Mk60=Stimulus,S154,601861,1,0
 Mk61=Stimulus,S  2,619143,1,0
-Mk62=Stimulus,S  9,619450,1,0
+Mk62=Stimulus,S 94,619450,1,0
 Mk63=Stimulus,S  3,636966,1,0
 Mk64=Stimulus,S124,637269,1,0
 Mk65=Stimulus,S  3,654781,1,0
@@ -87,7 +90,7 @@ Mk75=Stimulus,S 35,727812,1,0
 Mk76=Stimulus,S  3,745434,1,0
 Mk77=Stimulus,S125,745741,1,0
 Mk78=Stimulus,S  3,763217,1,0
-Mk79=Stimulus,S  9,763520,1,0
+Mk79=Stimulus,S 95,763520,1,0
 Mk80=Stimulus,S  3,781072,1,0
 Mk81=Stimulus,S155,781379,1,0
 Mk82=Stimulus,S  3,798880,1,0
@@ -98,7 +101,7 @@ Mk86=Stimulus,S126,819486,1,0
 Mk87=Stimulus,S  3,836974,1,0
 Mk88=Stimulus,S 36,837275,1,0
 Mk89=Stimulus,S  3,855069,1,0
-Mk90=Stimulus,S  9,855373,1,0
+Mk90=Stimulus,S 96,855373,1,0
 Mk91=Stimulus,S  3,873348,1,0
 Mk92=Stimulus,S 36,873642,1,0
 Mk93=Stimulus,S  3,891100,1,0
@@ -112,7 +115,7 @@ Mk100=Stimulus,S127,945567,1,0
 Mk101=Stimulus,S  3,963753,1,0
 Mk102=Stimulus,S 37,964046,1,0
 Mk103=Stimulus,S  2,981040,1,0
-Mk104=Stimulus,S  9,981345,1,0
+Mk104=Stimulus,S 97,981345,1,0
 Mk105=Stimulus,S  3,998855,1,0
 Mk106=Stimulus,S  8,999153,1,0
 Mk107=Stimulus,S  3,1016727,1,0

@@ -1,0 +1,4 @@
+file_list.txt - the 16 files where there is no problem with rrrr etc
+file_llist_full.txt - all 20 files
+
+there absolutely can't be a blank line at the end, nothing has been done to deal nicely with extra lines
