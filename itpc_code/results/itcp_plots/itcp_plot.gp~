@@ -1,0 +1,6 @@
+unset key
+
+plot for [i=2:20] "itcp_avav_all.txt" us 1:i w lines lc rgb 'gray'
+
+replot "itcp_avav_grand_av.txt" us 1:2 w lines lw 3 lc rgb 'black'
+	
