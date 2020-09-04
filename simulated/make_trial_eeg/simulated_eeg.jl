@@ -9,10 +9,12 @@
 # the Frank vectors are 300 long so 32 components are picked
 # to act as "electrodes"
 
+using Statistics
 using Random
 using StatsBase
 using FFTW
 using MAT
+using CorrNoise
 
 keyDictionaryLocation="./keyDictionary/"::String
 trialLocation="./trials/"::String
@@ -66,8 +68,8 @@ function loadTrial(fileName::String)
                 end
         end
     end
-
-    trial
+#    trial
+    shuffle(trial)
 
 end
 
@@ -130,7 +132,17 @@ function makeTrialResponse(repeatN::Int64,trialName::String,keys,electrodes::Vec
     function filter(i)
         sin(pi*i/repeatN)
     end
-    
+
+    # function filter(i)
+    #     1.0
+    # end
+
+
+    # function filter(i::Int64)
+    #     x=(i-repeatN/2)/repeatN
+    #     exp(-x^2)
+    # end
+            
     trial=loadTrial(trialName,keys)
     trialN=length(trial)-word0
 
@@ -141,6 +153,11 @@ function makeTrialResponse(repeatN::Int64,trialName::String,keys,electrodes::Vec
     for (wordC,word) in enumerate(trial)
         if wordC > word0
             thisVector=loadVector(word[2],word[1])
+            #thisVector=2.0*rand(Float64,electrodeN)-ones(Float64,electrodeN)
+            #for e in thisVector
+            #    print(e," ")
+            #end
+            #println()
             for repeatC in 1:repeatN
                 for (i,e) in enumerate(electrodes)
                     response[i,(wordC-1-word0)*repeatN+repeatC]=thisVector[e]*filter(repeatC)
@@ -176,6 +193,12 @@ function loadTrials(condition::String)
 
 end
     
+# this was used to do the Fourier transform directly; I changed to exporting the responses
+# and running them through the same Fourier code as the real data
+# this is just for consistiency 
+# the answer is largely unchanged, the peaks are broader from Fieldtrip because of the taper
+# anyway since I haven't been using this it probably doesn't work anymore since I started
+# adding the noise.
 
 function makeFourierResponse(repeatN::Int64,condition::String,keys,electrodes::Vector{Int64},freqN,freq0,word0,eta)
 
@@ -193,7 +216,6 @@ function makeFourierResponse(repeatN::Int64,condition::String,keys,electrodes::V
         bigA[:,trialC,:]=fft(littleA,2)[:,freq0:freq1]
     end
 
-    
     bigA
     
 end
@@ -201,26 +223,70 @@ end
 #note that response has the indicies in a different order to fourierResponse!
 #should fix this!
 
-function makeResponse(repeatN::Int64,condition::String,keys,electrodes::Vector{Int64},word0)
+function makeResponse(repeatN::Int64,condition::String,keys,electrodes::Vector{Int64},word0,eta)
 
     trials=loadTrials(condition)
 
     exampleTrial=loadTrial(trials[1],keys)
     wordN=length(exampleTrial)-word0
 
+    electrodeN=length(electrodes)
     
     trialN=length(trials)
     
     response=zeros(Float64,trialN,electrodeN,repeatN*wordN)
 
     for (trialC,trialName) in enumerate(trials)
-        response[trialC,:,:]=makeTrialResponse(repeatN,trialName,keys,electrodes,word0)        
+        pinkNoise=OofRNG(GaussRNG(MersenneTwister(rand(UInt64))), -0.75, 1.15e-5, 0.01, 1000.0)
+        trialResponse=makeTrialResponse(repeatN,trialName,keys,electrodes,word0)
+        response[trialC,:,:]=trialResponse
+        for t in 1:repeatN*wordN
+            r=randoof(pinkNoise)
+            for e in 1:electrodeN
+                response[trialC,e,t]+=eta*r
+            end
+        end
     end
 
     response
     
 end
 
+function simpleCoeff(condition::String,keys,electrodes::Vector{Int64},word0)
+
+    a=0.3411 #this is the magic number that gives a uniformly selected x the same std as the word coeffs
+
+    sigma=0.1969 # I now realise it's normal
+    
+    trials=loadTrials(condition)
+
+    electrodeN=length(electrodes)
+
+    coeff=zeros(Float64,electrodeN)
+
+    for (trialC,trialName) in enumerate(trials)
+        
+        trial=loadTrial(trialName,keys)
+
+        trialCoeff=zeros(Float64,electrodeN)
+        
+        for (wordC,word) in enumerate(trial)
+            if wordC > word0
+                thisVector=loadVector(word[2],word[1])
+                #thisVector=2*a*rand(Float64,electrodeN)-a*ones(Float64,electrodeN)
+                #thisVector=sigma*randn(Float64,electrodeN)
+                trialCoeff+=thisVector*(-1)^wordC
+            end
+        end
+        coeff+=abs.(trialCoeff)
+        
+    end
+
+    sum(abs.(coeff))
+    
+end
+
+    
 
 
 function phase(bigA)
@@ -243,10 +309,11 @@ end
 
 keys=loadKeyDictionary()
 
-electrodeN=32
+electrodeN=300
 frankN=300
+word0=4
 
-electrodes=electrodeVector(frankN,electrodeN)
+#electrodes=electrodeVector(frankN,electrodeN)
 
 #println(keys)
 
@@ -268,8 +335,32 @@ electrodes=electrodeVector(frankN,electrodeN)
 #    println(a)
 #end
 
-response=makeResponse(320,"anan",keys,electrodes,4)
+condition="rrrr"
 
-file = matopen("anan_response.mat", "w")
-write(file, "anan_reponse", response)
-close(file)
+eta=0.5
+
+
+#response=makeResponse(320,condition,keys,collect(1:300),4,eta)
+
+#file = matopen(condition*"_response.mat", "w")
+#file = matopen("random"*"_response.mat", "w")
+#write(file, "response", response)
+#close(file)
+
+#testN=10
+#test=Float64[]
+#for i in 1:testN
+#   push!(test,simpleCoeff(condition,keys,collect(1:300),word0))
+#end
+
+#println(mean(test)," ",std(test))
+
+#sort!(test)
+
+#println(test[Int64(0.95*testN)]," ",test[Int64(0.05*testN)])
+
+conditions=["rrrr","avav","phmi","anan"]
+
+for condition in conditions
+    println(condition," ",simpleCoeff(condition,keys,collect(1:300),word0))
+end
