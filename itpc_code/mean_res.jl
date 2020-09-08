@@ -1,6 +1,11 @@
 
 function meanResultant(a)
-    dropdims(abs.(sum(a,dims=1)./size(a)[1]),dims=1)
+    meanResultant(a,1)
+end
+
+function meanResultant(a,dim::Int64)
+    #dropdims(abs.(sum(a,dims=dim)./size(a)[dim]),dims=dim)
+    dropdims(abs.(mean(a,dims=dim)),dims=dim)
 end
 
 function circularMeasures(a)
@@ -19,5 +24,15 @@ end
 
 function biasCorrect(a)
     (dropdims(abs.(sum(a,dims=1).^2/size(a)[1]),dims=1)-ones(Float64,size(a)[2:3]))/(size(a)[1]-1)
+end
+
+
+
+function getPower(a)
+    getPower(a,1)
+end
+
+function getPower(a,dim::Int64)
+    dropdims( mean((abs.(a)).^2,dims=dim) ,dims=dim)
 end
 

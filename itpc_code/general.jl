@@ -1,10 +1,18 @@
 
-# general helper programmes including crucially the load programmes
+# general helper functions including crucially the load functions
+# and condition function which splits trials by condition
+
 
 # for those of us who distrust global variables
 function getStimuli()
     ["advp","rrrr","rrrv","avav","anan","phmi"]
 end
+
+function getStimuliP1to4()
+    ["avav","anan","phmi"]
+end
+
+
 
 function getGrammarPeaks()
     f=1/0.32
@@ -80,16 +88,7 @@ end
 #splits the input into a dictionary of conditions
 
 
-function condition(filename::String,decoding::Vector{Int64})
-    
-    bigA=load(filename)
-    condition(bigA[2],decoding)
-
-end
-
-function condition(phases::Array{Complex{Float64},3},decoding::Vector{Int64})
-
-    stimuli = getStimuli()
+function condition(phases::Array{Complex{Float64},3},decoding::Vector{Int64},stimuli::Array{String},offset::Int64)
 
     trialsPerCondition=25::Int64
     stride=30::Int64
@@ -97,7 +96,7 @@ function condition(phases::Array{Complex{Float64},3},decoding::Vector{Int64})
     condPhases=Dict()
     
     for (i,stimuli) in enumerate(stimuli)
-        a=(i-1)*stride
+        a=(i-1)*stride+offset
         b=a+trialsPerCondition-1
         condPhases[stimuli]=[trialsPerCondition,phases[findall(x->x in a:b, decoding),:,:]]
     end
@@ -107,10 +106,19 @@ function condition(phases::Array{Complex{Float64},3},decoding::Vector{Int64})
 end
 
 
-        
+function conditionP1to4(filename::String,decoding::Vector{Int64})
 
-                   
+    bigA=load(filename)
+    condition(bigA[2],decoding, getStimuliP1to4(),90)
+
+end
 
 
-                   
+function conditionP5to20(filename::String,decoding::Vector{Int64})
+
+    bigA=load(filename)
+    condition(bigA[2],decoding, getStimuli(),0)
+
+end
+
 

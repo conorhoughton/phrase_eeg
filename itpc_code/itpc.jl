@@ -1,4 +1,5 @@
 
+
 # this is the programme that does all the work
 # it loads the big matrices of Fourier coefficients
 # organizes them into a dictionary that can be used to make matrices and vectors
@@ -7,6 +8,8 @@
 
 
 using HypothesisTests
+using KernelDensity
+using Distributions
 
 include("general.jl")
 include("mean_res.jl")
@@ -49,8 +52,8 @@ frequencyN=58
 stimuli=getStimuli()
 stimuliP1to4=getStimuliP1to4()
 stimuliN=length(stimuli)
-trialsN=24
-
+trialN=24
+electrodeN=32
 
 allITPC=zeros(Float64,participantN,stimuliN,frequencyN)
 
@@ -115,18 +118,28 @@ open(filepath*freqFile) do file
 end
 
 
-stimulusI=3
-#participant0=1
-participant0=5
+
+#participant0=5
+
+
+#### this is a bit of a mess, it is a long list of things only used
+#### once and is given as a series of functions with global variables
+#### yuck
+
+
+
 
 
 #--------------- print ICTP grand average
 
-printGrandAverage=false
-#printGrandAverage=true
+function printGrandAverage(stimulusI)
 
-if printGrandAverage
-
+    if stimulusI>3
+        participant0=1
+    else
+        participant0=5
+    end
+    
     grandAverage=dropdims(sum(allITPC,dims=1),dims=1)/(participantN-participant0+1)
 
     for f in 1:frequencyN
@@ -137,11 +150,16 @@ end
 
 #--------------- print ICTP - all
 
-#printAll=true
-printAll=false
+function printAll(stimulusI)
 
-if printAll
+    
+    if stimulusI>3
+        participant0=1
+    else
+        participant0=5
+    end
 
+    
     for f in 1:frequencyN
         print(frequencies[f]," ")
         for participantI in participant0:participantN
@@ -166,16 +184,13 @@ end
 
 #----------------- examine the behaviour with the null ITPC vector
 
-testCompareToNull=false
-
-
-if testCompareToNull
+function testCompareToNull()
 
     #stimulusI=6
     
     # for pointsN in 1000:1000:30000
     
-    #     nullITPC=randomITPC(pointsN,trialsN,participantN)
+    #     nullITPC=randomITPC(pointsN,trialN,1)
 
     #     print(pointsN," ")
     #     for g in grammarIndices
@@ -188,7 +203,7 @@ if testCompareToNull
 
     pointsN=5000
 
-    nullITPC=randomITPC(pointsN,trialsN,participantN)
+    nullITPC=randomITPC(pointsN,trialN,1)
     
     for f in 1:frequencyN
         print(f,"  ",frequencies[f])
@@ -202,15 +217,11 @@ end
 
 # ---------------------- find significant peaks
 
-findSignificantPeaks=true
-
-if findSignificantPeaks
+function findSignificantPeaks(pointN)
     
-    pointsN=10000
 
-    nullITPC=randomITPC(pointsN,trialsN,participantN)
+    nullITPC=randomITPC(pointN,trialN,electrodeN)
 
-    
     f=grammarIndices[1]
     
     println("sentence")
@@ -254,23 +265,117 @@ if findSignificantPeaks
 
 end
 
+
+# ---------------------- find significant peaks 16
+### same again using only P5-20
+
+function findSignificantPeaks16(pointN)
+
+    println("P5-16 only")
+    
+
+    nullITPC=randomITPC(pointN,trialN,electrodeN)
+
+    
+    f=grammarIndices[1]
+    
+    println("sentence")
+    print("advp ")
+    println(pvalue(MannWhitneyUTest(allITPC[5:20,1,f],nullITPC),tail=:right))
+    print("rrrr ")
+    println(pvalue(MannWhitneyUTest(allITPC[5:20,2,f],nullITPC),tail=:right))
+    print("rrrv ")
+    println(pvalue(MannWhitneyUTest(allITPC[5:20,3,f],nullITPC),tail=:right))
+    print("avav ")
+    println(pvalue(MannWhitneyUTest(allITPC[5:20,4,f],nullITPC),tail=:right))
+    print("anan ")
+    println(pvalue(MannWhitneyUTest(allITPC[5:20,5,f],nullITPC),tail=:right))
+    print("phmi ")
+    println(pvalue(MannWhitneyUTest(allITPC[5:20,6,f],nullITPC),tail=:right))
+
+    
+    f=grammarIndices[2]
+    
+    println("\nphrase")
+    print("rrrr ")
+    println(pvalue(MannWhitneyUTest(allITPC[5:20,2,f],nullITPC),tail=:right))
+    print("avav ")
+    println(pvalue(MannWhitneyUTest(allITPC[5:20,4,f],nullITPC),tail=:right))
+    print("anan ")
+    println(pvalue(MannWhitneyUTest(allITPC[5:20,5,f],nullITPC),tail=:right))
+    print("phmi ")
+    println(pvalue(MannWhitneyUTest(allITPC[5:20,6,f],nullITPC),tail=:right))
+
+    f=grammarIndices[4]
+    
+    println("\nsyllable")
+    print("rrrr ")
+    println(pvalue(MannWhitneyUTest(allITPC[5:20,2,f],nullITPC),tail=:right))
+    print("avav ")
+    println(pvalue(MannWhitneyUTest(allITPC[5:20,4,f],nullITPC),tail=:right))
+    print("anan ")
+    println(pvalue(MannWhitneyUTest(allITPC[5:20,5,f],nullITPC),tail=:right))
+    print("phmi ")
+    println(pvalue(MannWhitneyUTest(allITPC[5:20,6,f],nullITPC),tail=:right))
+
+end
+
+
 # ---------------------- compare phrase peaks 
 
 
-comparePhrasePeaks=true
-
-if comparePhrasePeaks
+function comparePhrasePeaks()
 
     ourStimuli=stimuli[[2,4,5,6]]
-    
-    pointsN=10000
-
-    nullITPC=randomITPC(pointsN,trialsN,participantN)
 
     f=grammarIndices[2]
 
     testVectors=Dict("rrrr"=>allITPC[5:20,2,f],"avav"=>allITPC[:,4,f],"anan"=>allITPC[:,5,f],"phmi"=>allITPC[:,6,f])
 
+
+    println("\nmeans")
+    for stimulus in ourStimuli
+        println(stimulus," ",mean(testVectors[stimulus]))
+    end
+    
+    
+    println("\npairwise")
+
+    for i in 1:4
+        for j in i+1:4
+            print(ourStimuli[i]," v ",ourStimuli[j]," ")
+            if i==1
+                println( pvalue(SignTest(testVectors[ourStimuli[i]],testVectors[ourStimuli[j]][5:20]),tail=:both))
+            else
+                println( pvalue(SignTest(testVectors[ourStimuli[i]],testVectors[ourStimuli[j]]),tail=:both))
+            end
+       end
+    end
+
+    println("\nKruskalWallis")
+    println(pvalue(KruskalWallisTest(testVectors["rrrr"],testVectors["avav"],testVectors["anan"],testVectors["phmi"])))
+    
+end
+
+# ---------------------------------------- like compare phrase peaks but for syllables
+
+function compareSyllablePeaks()
+
+    println("compare syllable peaks")
+    
+    ourStimuli=stimuli[[2,4,5,6]]
+
+    f=grammarIndices[4]
+
+    testVectors=Dict("rrrr"=>allITPC[5:20,2,f],"avav"=>allITPC[:,4,f],"anan"=>allITPC[:,5,f],"phmi"=>allITPC[:,6,f])
+
+
+    println("\nmeans")
+    for stimulus in ourStimuli
+        println(stimulus," ",mean(testVectors[stimulus]))
+    end
+    
+    
     println("\npairwise")
 
     for i in 1:4
@@ -288,3 +393,207 @@ if comparePhrasePeaks
     println(pvalue(KruskalWallisTest(testVectors["rrrr"],testVectors["avav"],testVectors["anan"],testVectors["phmi"])))
     
 end
+
+
+# ---------------------- compare phrase peaks 16
+# same analysis again but only using P5-20
+
+function comparePhrasePeaks16()
+
+    println("\nP5-16 only")
+    
+    ourStimuli=stimuli[[2,4,5,6]]
+
+    f=grammarIndices[2]
+
+    testVectors=Dict("rrrr"=>allITPC[5:20,2,f],"avav"=>allITPC[5:20,4,f],"anan"=>allITPC[5:20,5,f],"phmi"=>allITPC[5:20,6,f])
+
+#    println(testVectors)
+
+    println("\nmeans")
+    for stimulus in ourStimuli
+        println(stimulus," ",mean(testVectors[stimulus]))
+    end
+    
+    println("\npairwise")
+
+    for i in 1:4
+        for j in i+1:4
+            print(ourStimuli[i]," v ",ourStimuli[j]," ")
+            println(pvalue(SignTest(testVectors[ourStimuli[i]],testVectors[ourStimuli[j]]),tail=:both))
+        end
+    end
+
+    println("\nKruskalWallis")
+    println(pvalue(KruskalWallisTest(testVectors["rrrr"],testVectors["avav"],testVectors["anan"],testVectors["phmi"])))
+    
+end
+
+
+# ------------ kde for ITCP values
+
+function kernelDensity()
+    
+    f=grammarIndices[2]
+    s1=5
+    s2=4
+
+    samples=allITPC[:,s1,f].-allITPC[:,s2,f]
+    
+    u=kde(samples)
+
+    d=fit(Normal,samples)
+    
+    for i in 1:length(u.x)
+        println(u.x[i]," ",u.density[i]," ",pdf(d,u.x[i]))
+    end
+    
+end
+
+# ------------- t test
+### P5-20 only for simplicity
+
+function tTest()
+
+    println("\nt test --- P5-16 only")
+    
+    ourStimuli=stimuli[[2,4,5,6]]
+    
+    f=grammarIndices[2]
+
+    testVectors=Dict("rrrr"=>allITPC[5:20,2,f],"avav"=>allITPC[5:20,4,f],"anan"=>allITPC[5:20,5,f],"phmi"=>allITPC[5:20,6,f])
+
+    
+    println("\npairwise")
+
+    for i in 1:4
+        for j in i+1:4
+            print(ourStimuli[i]," v ",ourStimuli[j]," ")
+            println( pvalue(OneSampleTTest(testVectors[ourStimuli[i]],testVectors[ourStimuli[j]]),tail=:both))
+        end
+    end
+    
+end
+
+
+# ------------- significance of peaks per participant
+
+function participantPeaks()
+
+    ourStimuli=[2,4,5,6]
+    
+    trialN=24
+    participantN=1
+    electrodeN=32
+    pointN=10_000
+    confidence=0.05
+    
+    interval=confidenceInterval(pointN,trialN,electrodeN,confidence)
+    intervalI=1
+    
+    println("\ninterval")
+    
+    println(interval)
+
+    println("\nphrases")
+    
+    for s in ourStimuli
+        println(stimuli[s]," ",length(findall(allITPC[:,s,grammarIndices[2]].>interval[1])))
+    end
+
+    println("\nsylables")
+        
+    for s in ourStimuli
+        println(stimuli[s]," ",length(findall(allITPC[:,s,grammarIndices[4]].>interval[1])))
+    end
+
+end
+
+# ---------------- data for individual participant figure
+
+function individuals()
+    
+
+    ourStimuli=[2,4,5,6]
+    
+    trialN=24
+
+    electrodeN=32
+    pointN=10_000
+    confidence=0.05
+    
+    interval=confidenceInterval(pointN,trialN,electrodeN,confidence)
+    
+#    println("\ninterval")
+    
+#    println(interval)
+    
+    participantN=20
+    
+    s=5 # ANAN
+    g=grammarIndices[2] #phrase
+
+    data=Array{Tuple{Int64,Float64}}(undef,participantN)
+    
+    
+    for i in 1:participantN
+        data[i]=(i,allITPC[i,s,g])
+    end
+
+    order=[x[1] for x in sort(data, by = x->x[2])]
+
+    s=6
+ 
+    for o in order
+        if s!=2 || (s==2 && o>4)
+            for g in grammarIndices[[2,4]]
+                print(allITPC[o,s,g]," ",allITPC[o,s,g]>interval[2]," ")
+            end
+            println()     
+        else
+            println(0.0," ",false," ",0.0," ",false)
+        end
+    end
+        
+end
+
+
+# ---------------- prints the order of participants by ANAN phrase response
+
+function whoIsTheBest()
+    
+
+    s=5 # ANAN
+    g=grammarIndices[2] #phrase
+
+    data=Array{Tuple{Int64,Float64}}(undef,participantN)
+    
+    
+    for i in 1:participantN
+        data[i]=(i,allITPC[i,s,g])
+    end
+
+    order=[x[1] for x in sort(data, by = x->x[2])]
+
+    println(order)
+        
+end
+
+    
+
+    
+
+#---------------- int main()
+
+#printGrandAverage(6)
+#printAll(6)
+#findSignificantPeaks(10_000)
+#findSignificantPeaks16(10_000)
+#comparePhrasePeaks()
+#compareSyllablePeaks()
+#comparePhrasePeaks16()
+#kernelDensity()
+#tTest()
+#participantPeaks()
+
+whoIsTheBest()
